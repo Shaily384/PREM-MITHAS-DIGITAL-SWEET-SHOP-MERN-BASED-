@@ -9,38 +9,38 @@ const orderSchema = new mongoose.Schema({
 
   items: [
     {
-      productId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "product",
-        required: true,
-      },
-      name: { type: String, required: true },
-      price: { type: Number, required: true },
-      image: { type: Array, required: true },
-      quantity: { type: Number, required: true },
+      productId: { type: mongoose.Schema.Types.ObjectId, ref: "product", required: true },
+      name:      { type: String,  required: true },
+      price:     { type: Number,  required: true },
+      image:     { type: Array,   required: true },
+      quantity:  { type: Number,  required: true },
     },
   ],
 
-  amount: { type: Number, required: true },
+  amount:         { type: Number, required: true },
 
-  address: { type: Object, required: true },
+  // ── Coupon ─────────────────────────────────────
+  couponCode:     { type: String, default: null },
+  discountAmount: { type: Number, default: 0    },
 
-  status: {
-    type: String,
-    default: "Order Placed",
+  address:        { type: Object, required: true },
+
+  status:         { type: String, default: "Order Placed" },
+
+  // ── Location / delivery tracking ───────────────
+  deliveryLocation: {
+    lat: { type: Number, default: null },
+    lng: { type: Number, default: null },
   },
+  estimatedDelivery: { type: Date,   default: null },
 
-  paymentMethod: { type: String, required: true },
+  // ── Payment ────────────────────────────────────
+  paymentMethod:  { type: String,  required: true },
+  payment:        { type: Boolean, default: false },
+  upiTxnId:       { type: String,  default: ""   },
 
-  payment: {
-    type: Boolean,
-    default: false,
-  },
-
-  date: { type: Number, required: true },
+  date:           { type: Number,  required: true },
 });
 
-const orderModel =
-  mongoose.models.order || mongoose.model("order", orderSchema);
-
+const orderModel = mongoose.models.order || mongoose.model("order", orderSchema);
 export default orderModel;

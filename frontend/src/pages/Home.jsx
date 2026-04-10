@@ -1,6 +1,5 @@
 import React from "react";
 import { Helmet } from "react-helmet-async";
-
 import Hero from "../components/Hero";
 import LatestCollection from "../components/LatestCollection";
 import BestSeller from "../components/BestSeller";
@@ -8,6 +7,7 @@ import OurPolicy from "../components/OurPolicy";
 import NewsletterBox from "../components/NewsletterBox";
 import Testimonials from "../components/Testimonials";
 import InstagramFeed from "../components/InstagramFeed";
+import GiftRecommendation from "../components/GiftRecommendation";
 
 const Home = () => {
   return (
@@ -28,6 +28,7 @@ const Home = () => {
         <LatestCollection />
         <BestSeller />
         <Testimonials />
+        <GiftRecommendation />
         {/* <OurPolicy /> */}
         {/* <NewsletterBox /> */}
       </div>

@@ -1,102 +1,119 @@
 import { v2 as cloudinary } from "cloudinary";
 import productModel from "../models/productModel.js";
+import orderModel   from "../models/orderModel.js";
 
-// Function to add a product
+/* ── Add Product ── */
 const addProduct = async (req, res) => {
   try {
-    const { name, description, price, category, subCategory, bestseller } = req.body;
+    const { name, description, price, category, subCategory, bestseller, discount, discountLabel } = req.body;
 
     const image1 = req.files.image1 && req.files.image1[0];
     const image2 = req.files.image2 && req.files.image2[0];
     const image3 = req.files.image3 && req.files.image3[0];
     const image4 = req.files.image4 && req.files.image4[0];
-
     const images = [image1, image2, image3, image4].filter(Boolean);
 
     const imagesUrl = await Promise.all(
-      images.map(async (item) => {
-        const result = await cloudinary.uploader.upload(item.path, {
-          resource_type: "image",
-        });
-        return result.secure_url;
-      })
+      images.map(item => cloudinary.uploader.upload(item.path, { resource_type: "image" }).then(r => r.secure_url))
     );
 
-    const productData = {
-      name,
-      description,
-      category,
-      subCategory, // Matches the new field in your Admin Add page
-      price: Number(price),
-      bestseller: bestseller === "true",
-      image: imagesUrl,
-      date: Date.now(),
-    };
+    await new productModel({
+      name, description, category,
+      subCategory: subCategory || "",
+      price:         Number(price),
+      bestseller:    bestseller === "true",
+      discount:      Number(discount) || 0,
+      discountLabel: discountLabel || "",
+      image:         imagesUrl,
+      date:          Date.now(),
+    }).save();
 
-    const product = new productModel(productData);
-    await product.save();
-
-    res.json({ success: true, message: "Product Added Successfully" });
+    res.json({ success: true, message: "Product Added" });
   } catch (error) {
-    console.error(error);
     res.json({ success: false, message: error.message });
   }
 };
 
-// Function to list all products
+/* ── List Products ── */
 const listProducts = async (req, res) => {
   try {
     const products = await productModel.find({});
     res.json({ success: true, products });
   } catch (error) {
-    console.log(error);
     res.json({ success: false, message: error.message });
   }
 };
 
-// Function to remove a product
+/* ── Remove Product ── */
 const removeProduct = async (req, res) => {
   try {
     await productModel.findByIdAndDelete(req.body.id);
     res.json({ success: true, message: "Product Removed" });
   } catch (error) {
-    console.log(error);
     res.json({ success: false, message: error.message });
   }
 };
 
-// Function for single product info
+/* ── Single Product ── */
 const singleProduct = async (req, res) => {
   try {
-    const { productId } = req.body;
-    const product = await productModel.findById(productId);
+    const product = await productModel.findById(req.body.productId);
     res.json({ success: true, product });
   } catch (error) {
-    console.log(error);
     res.json({ success: false, message: error.message });
   }
 };
 
-// Function to update a product
-const updateProduct = async (req, res) => {
+/* ── Update Product (+ discount) ── */
+export const updateProduct = async (req, res) => {
   try {
-    const { id, name, price, category, subCategory, description, bestseller } = req.body;
-
+    const { id, name, price, category, description, bestseller, discount, discountLabel } = req.body;
     await productModel.findByIdAndUpdate(id, {
-      name,
-      price,
-      category,
-      subCategory,
-      description,
-      bestseller,
+      name, price, category, description, bestseller,
+      discount: Number(discount) || 0,
+      discountLabel: discountLabel || "",
     });
-
-    res.json({ success: true, message: "Product updated successfully" });
+    res.json({ success: true, message: "Product updated" });
   } catch (error) {
     res.json({ success: false, message: error.message });
   }
 };
 
-// All names here must match the function names above exactly
-// At the bottom of backend/controllers/productController.js
-export { addProduct, listProducts, removeProduct, singleProduct, updateProduct };
+/* ── Sales Insights (admin) ── */
+export const salesInsights = async (req, res) => {
+  try {
+    const orders  = await orderModel.find({});
+    const products = await productModel.find({});
+
+    // Count units sold per product
+    const salesMap = {};
+    orders.forEach(order => {
+      order.items.forEach(item => {
+        const id = String(item.productId || item._id);
+        salesMap[id] = (salesMap[id] || 0) + item.quantity;
+      });
+    });
+
+    const enriched = products.map(p => ({
+      _id:          p._id,
+      name:         p.name,
+      category:     p.category,
+      price:        p.price,
+      image:        p.image,
+      bestseller:   p.bestseller,
+      discount:     p.discount,
+      avgRating:    p.avgRating,
+      reviewCount:  p.reviewCount,
+      unitsSold:    salesMap[String(p._id)] || 0,
+      revenue:      (salesMap[String(p._id)] || 0) * p.price,
+    }));
+
+    enriched.sort((a, b) => b.unitsSold - a.unitsSold);
+
+    res.json({ success: true, insights: enriched });
+  } catch (error) {
+    res.json({ success: false, message: error.message });
+  }
+};
+
+export { listProducts, addProduct, removeProduct, singleProduct };

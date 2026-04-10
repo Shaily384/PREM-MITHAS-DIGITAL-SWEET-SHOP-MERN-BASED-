@@ -10,35 +10,21 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Dashboard from "./pages/Dashboard";
 import UsersPage from "./pages/Users";
+import Coupons from "./pages/Coupons";
+import SalesInsights from "./pages/SalesInsights";
 import { backendUrl } from "./config";
-
-// export const backendUrl = import.meta.env.VITE_BACKEND_URL;
-// export const currency = "₹";
-
-//!
-/*
- To Run Backend:
- - Local Development: npm run dev / .env.development
- - Production: npm run build & npm run preview / .env.production
-*/
-//!
 
 const App = () => {
   const [token, setToken] = useState("");
 
   useEffect(() => {
     const savedToken = localStorage.getItem("token");
-    if (savedToken) {
-      setToken(savedToken);
-    }
+    if (savedToken) setToken(savedToken);
   }, []);
 
   useEffect(() => {
-    if (token) {
-      localStorage.setItem("token", token);
-    } else {
-      localStorage.removeItem("token");
-    }
+    if (token) localStorage.setItem("token", token);
+    else localStorage.removeItem("token");
   }, [token]);
 
   return (
@@ -52,16 +38,15 @@ const App = () => {
           <hr />
           <div className="flex w-full">
             <Sidebar />
-            <div className="w-[70%] mx-auto ml-[max(5vw,25px)] my-8 text-gray-600 text-base">
+            <div className="flex-1 mx-auto px-6 my-8 text-gray-600 text-base max-w-6xl">
               <Routes>
-                <Route
-                  path="/dashboard"
-                  element={<Dashboard token={token} />}
-                />
-                <Route path="/add" element={<Add token={token} />} />
-                <Route path="/list" element={<List token={token} />} />
-                <Route path="/orders" element={<Orders token={token} />} />
-                <Route path="/users" element={<UsersPage token={token} />} />
+                <Route path="/dashboard" element={<Dashboard token={token} />} />
+                <Route path="/add"       element={<Add token={token} />} />
+                <Route path="/list"      element={<List token={token} />} />
+                <Route path="/orders"    element={<Orders token={token} />} />
+                <Route path="/users"     element={<UsersPage token={token} />} />
+                <Route path="/coupons"   element={<Coupons token={token} />} />
+                <Route path="/insights" element={<SalesInsights token={token} />} />
               </Routes>
             </div>
           </div>

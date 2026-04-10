@@ -1,15 +1,18 @@
 import React, { useContext, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-
 import { ShopContext } from "../context/ShopContext";
+import { useNotification } from "../context/NotificationContext";
 import { assets } from "../assets/assets";
 import RelatedProducts from "../components/RelatedProducts";
 import ProductSkeleton from "../components/ProductSkeleton";
+import AIRecommendations from "../components/AIRecommendations";
+import QRQuickOrderModal from "../components/QRQuickOrderModal";
 
 const Product = () => {
   const { productId } = useParams();
   const { products, currency, addToCart } = useContext(ShopContext);
+  const { notifyAddToCart } = useNotification();
   const [productData, setProductData] = useState(false);
   const [image, setImage] = useState("");
 
@@ -26,9 +29,12 @@ const Product = () => {
     fetchProductData();
   }, [productId, products]);
 
-  if (!productData) {
-    return <ProductSkeleton />;
-  }
+  if (!productData) return <ProductSkeleton />;
+
+  const handleAddToCart = () => {
+    addToCart(productData._id);
+    notifyAddToCart(productData.name);
+  };
 
   return productData ? (
     <>
@@ -36,16 +42,12 @@ const Product = () => {
         <title>{productData.name} | Wholesale Wedding Gift</title>
         <meta
           name="description"
-          content={`Buy ${productData.name} in bulk for weddings, return gifts and festive ceremonies. Premium quality wholesale wedding gift available across India.`}
+          content={`Buy ${productData.name} in bulk for weddings, return gifts and festive ceremonies.`}
         />
-        <link
-          rel="canonical"
-          href={`https://gifthouse.vercel.app/product/${productData._id}`}
-        />
+        <link rel="canonical" href={`https://gifthouse.vercel.app/product/${productData._id}`} />
       </Helmet>
 
       <div className="px-6 sm:px-10 md:px-16 lg:px-20 border-t-2 pt-10 transition-opacity duration-500 opacity-100">
-        {/* Product Data */}
         <div className="flex gap-12 flex-col sm:flex-row">
           {/* Images */}
           <div className="flex-1 flex flex-col-reverse gap-3 sm:flex-row">
@@ -60,7 +62,6 @@ const Product = () => {
                 />
               ))}
             </div>
-
             <div className="w-full sm:w-[80%]">
               <img className="w-full h-auto" src={image} alt="product" />
             </div>
@@ -79,51 +80,39 @@ const Product = () => {
               <p className="pl-2">(122)</p>
             </div>
 
-            <p className="mt-5 text-3xl font-medium">
-              {currency}
-              {productData.price}
-            </p>
-
-            <p className="mt-5 text-gray-500 md:w-4/5">
-              {productData.description}
-            </p>
+            <p className="mt-5 text-3xl font-medium">{currency}{productData.price}</p>
+            <p className="mt-5 text-gray-500 md:w-4/5">{productData.description}</p>
 
             <button
-              onClick={() => addToCart(productData._id)}
+              onClick={handleAddToCart}
               className="bg-black text-white px-8 py-3 text-sm mt-8 active:bg-gray-700"
             >
               ADD TO CART
             </button>
 
             <hr className="mt-8 sm:w-4/5" />
-
             <div className="text-sm text-gray-500 mt-5 flex flex-col gap-1">
               <p>100% Original product.</p>
               <p>Cash on delivery is available.</p>
-              {/* <p>Easy return and exchange within 7 days.</p> */}
             </div>
           </div>
         </div>
 
-        {/* Description */}
-        {/* <div className="mt-20">
-        <div className="flex">
-          <b className="border px-5 py-3 text-sm">Description</b>
-          <p className="border px-5 py-3 text-sm">Reviews (122)</p>
-        </div>
+        {/* ✅ AI Recommendations — similar sweets */}
+        <AIRecommendations
+          mode="product"
+          category={productData.category}
+          currentProductId={productData._id}
+        />
 
-        <div className="flex flex-col gap-4 border px-6 py-6 text-sm text-gray-500">
-          <p>
-            Premium handcrafted cane basket designed for durability,
-            eco-friendliness, and everyday use. Ideal for gifting, storage, and
-            wholesale requirements.
-          </p>
-        </div>
-      </div> */}
-
-        {/* Related Products */}
         <RelatedProducts category={productData.category} />
       </div>
+
+      {/* ✅ QR Quick Order floating button */}
+      <QRQuickOrderModal
+        productUrl={window.location.href}
+        productName={productData.name}
+      />
     </>
   ) : (
     <div className="opacity-0"></div>
